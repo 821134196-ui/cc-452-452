@@ -4,6 +4,8 @@
 node_modules/
 .venv/
 __pycache__/
+*.pyc
+data/
 target/
 dist/
 build/

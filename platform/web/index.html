@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>海州物流园 · 甩挂与钥匙交接平台</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" width="34" height="22" viewBox="0 0 64 32" aria-hidden="true">
+      <use href="#i-tractor"/>
+    </svg>
+    <div>
+      <h1>海州物流园 · 甩挂交接平台</h1>
+      <span class="subtitle">牵引车 / 挂车 / 钥匙柜 / 门岗 — 高峰作业看板（数据为虚构样例）</span>
+    </div>
+  </div>
+  <div class="clock" id="clock">--:--:--</div>
+  <div class="session" id="session"></div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="arrivals" class="tab active">车辆到园</button>
+  <button data-tab="queue" class="tab">甩挂队列</button>
+  <button data-tab="slots" class="tab">车位图</button>
+  <button data-tab="hitches" class="tab">挂接操作</button>
+  <button data-tab="keys" class="tab">钥匙柜台账</button>
+  <button data-tab="appearance" class="tab">外观对照</button>
+  <button data-tab="exits" class="tab">出园核验</button>
+  <button data-tab="events" class="tab tab-warn">异常流水</button>
+</nav>
+
+<main id="view"></main>
+
+<!-- 周转单详情抽屉 -->
+<aside class="drawer" id="drawer" hidden></aside>
+<div class="scrim" id="scrim" hidden></div>
+
+<!-- SVG 图标库：牵引车与挂车使用不同轮廓 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-tractor" viewBox="0 0 64 32">
+    <path d="M3 26 V13 H11 L17 6 H33 V26 Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M19 9 H30 V13 H15 Z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    <rect x="33" y="18" width="9" height="3.4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <circle cx="13" cy="26.5" r="4.2" fill="#2b2f33" stroke="currentColor" stroke-width="2"/>
+    <circle cx="29" cy="26.5" r="4.2" fill="#2b2f33" stroke="currentColor" stroke-width="2"/>
+  </symbol>
+  <symbol id="i-trailer" viewBox="0 0 64 32">
+    <rect x="3" y="4" width="58" height="17" rx="1.5" fill="none" stroke="currentColor" stroke-width="2.2"/>
+    <line x1="14" y1="4" x2="14" y2="21" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <line x1="14" y1="13" x2="8" y2="27" stroke="currentColor" stroke-width="2"/>
+    <line x1="20" y1="13" x2="26" y2="27" stroke="currentColor" stroke-width="2"/>
+    <circle cx="45" cy="26.5" r="4.2" fill="#2b2f33" stroke="currentColor" stroke-width="2"/>
+    <circle cx="55" cy="26.5" r="4.2" fill="#2b2f33" stroke="currentColor" stroke-width="2"/>
+    <rect x="54" y="7" width="5" height="4" fill="none" stroke="currentColor" stroke-width="1.2"/>
+  </symbol>
+</svg>
+
+<script src="app.js"></script>
+</body>
+</html>
