@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物流园挂车甩挂与车钥匙交接平台</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <h1>🚛 甩挂交接平台</h1>
+  <span class="sub">物流园调度 · 车钥匙交接 · 出园核验（数据均为虚构）</span>
+  <span class="spacer"></span>
+  <span class="sub mono" id="server-time">--:--:--</span>
+  <label class="sub">当前登录角色
+    <select id="user-select"></select>
+  </label>
+  <button class="ghost sm" id="btn-reseed" title="清空并重新加载高峰样例">重载高峰样例</button>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-view="dashboard" class="active">到园看板</button>
+  <button data-view="queue">甩挂队列 / 交接</button>
+  <button data-view="stalls">车位图</button>
+  <button data-view="couple">挂接操作</button>
+  <button data-view="keys">钥匙柜台账</button>
+  <button data-view="appearance">外观对照</button>
+  <button data-view="exit">出园核验</button>
+</nav>
+
+<main>
+  <!-- 1. 到园看板 -->
+  <section class="view active" id="view-dashboard">
+    <div class="grid cols-4" id="stat-row"></div>
+    <div class="section-title">周转阶段流水线</div>
+    <div class="pipeline" id="pipeline"></div>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>⏱ 等待时长监控（进程内任务，超时信号黄/红告警）</h3>
+        <table>
+          <thead><tr><th>工单</th><th>挂车</th><th>类型</th><th>已等待</th><th>阈值</th><th>状态</th></tr></thead>
+          <tbody id="wait-body"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3>⚠ 未关闭异常单</h3>
+        <table>
+          <thead><tr><th>类型</th><th>说明</th><th>状态</th><th>责任人</th></tr></thead>
+          <tbody id="exc-dash-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="section-title">事件流</div>
+    <div class="card" id="event-list"></div>
+  </section>
+
+  <!-- 2. 甩挂队列 / 交接步骤 -->
+  <section class="view" id="view-queue">
+    <div class="card">
+      <h3>门岗签到入园（门岗）</h3>
+      <div class="form-inline">
+        <div class="form-row"><label>牵引车车牌</label><select id="ci-plate"></select></div>
+        <div class="form-row"><label>车道</label><select id="ci-lane"><option>G1 南门</option><option>G3 东门</option></select></div>
+        <button id="btn-checkin">扫描签到 / 抬杆</button>
+      </div>
+    </div>
+    <div class="section-title">待卸挂队列（先到先分位，可模拟抢占）</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>工单</th><th>牵引车</th><th>挂车</th><th>司机</th><th>排队时长</th><th>分配车位（调度员）</th></tr></thead>
+        <tbody id="queue-body"></tbody>
+      </table>
+    </div>
+    <div class="section-title">在途交接工单（解绑 → 查验停妥 → 轮挡 → 钥匙入柜）</div>
+    <div class="grid cols-2" id="handoff-cards"></div>
+  </section>
+
+  <!-- 3. 车位图 -->
+  <section class="view" id="view-stalls">
+    <div class="card">
+      <div class="legend">
+        <span>
+          <svg class="sym" viewBox="0 0 30 18"><rect x="1" y="2" width="16" height="14" rx="2" fill="none" stroke="#f4c20d" stroke-width="1.6"/><rect x="17" y="5" width="11" height="11" rx="1" fill="none" stroke="#f4c20d" stroke-width="1.6"/></svg>
+          牵引车（车头轮廓）
+        </span>
+        <span>
+          <svg class="sym" viewBox="0 0 30 18"><rect x="2" y="3" width="26" height="12" rx="3" fill="none" stroke="#9ec5ff" stroke-width="1.6"/></svg>
+          挂车（长厢轮廓）
+        </span>
+        <span><i style="display:inline-block;width:12px;height:12px;border:1px dashed #b8b6b0;background:#202327"></i> 空闲</span>
+        <span><i style="display:inline-block;width:12px;height:12px;border:1px solid #f4c20d;background:#3a3820"></i> 占用</span>
+      </div>
+      <p class="muted">按真实编号排成平面行列（区-行列，如 A-205 = A区第2行第5列）。点击占用车位可跳转外观。</p>
+    </div>
+    <div id="zones"></div>
+  </section>
+
+  <!-- 4. 挂接操作 -->
+  <section class="view" id="view-couple">
+    <div class="card">
+      <h3>当前有效挂接关系（一个挂车同一时刻仅一组）</h3>
+      <table>
+        <thead><tr><th>牵引车</th><th></th><th>挂车</th><th>挂接时间</th><th>操作调度员</th></tr></thead>
+        <tbody id="coupling-body"></tbody>
+      </table>
+    </div>
+    <div class="section-title">提挂作业（司机/铅封/外观核对 → 取钥匙 → 挂接）</div>
+    <div class="grid cols-2" id="pickup-cards"></div>
+  </section>
+
+  <!-- 5. 钥匙柜台账 -->
+  <section class="view" id="view-keys">
+    <div class="card">
+      <h3>🔑 智能钥匙柜（3 行 × 8 列，点击格口查看牌号条码）</h3>
+      <div class="cabinet" id="cabinet-grid"></div>
+    </div>
+    <div class="section-title">钥匙交接密集清单（可扫描牌号）</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>条码</th><th>钥匙牌号</th><th>柜格</th><th>挂车</th><th>牵引车</th><th>状态</th><th>时间</th><th>责任人</th><th>备注</th></tr></thead>
+        <tbody id="key-ledger-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 6. 外观对照 -->
+  <section class="view" id="view-appearance">
+    <div class="card">
+      <div class="form-inline">
+        <div class="form-row"><label>选择工单 / 挂车</label><select id="appearance-cycle"></select></div>
+      </div>
+    </div>
+    <div class="section-title" id="appearance-title">外观照片在车辆轮廓对应方位旁展开</div>
+    <div class="vehicle-board" id="appearance-board"></div>
+    <div class="section-title">铅封记录</div>
+    <div class="card"><table>
+      <thead><tr><th>阶段</th><th>铅封号</th><th>是否相符</th><th>查验员</th><th>时间</th></tr></thead>
+      <tbody id="seal-body"></tbody>
+    </table></div>
+  </section>
+
+  <!-- 7. 出园核验 -->
+  <section class="view" id="view-exit">
+    <div class="grid cols-3">
+      <div class="stat"><div class="num" id="cnt-exit">0</div><div class="lbl">待出园核验</div></div>
+      <div class="stat alert"><div class="num" id="cnt-abn">0</div><div class="lbl">待主管审批异常</div></div>
+      <div class="stat ok"><div class="num" id="cnt-closed">0</div><div class="lbl">今日已关闭周转</div></div>
+    </div>
+    <div class="section-title">出园核验（正常出园 / 异常放行需主管批准）</div>
+    <div class="grid cols-2" id="exit-cards"></div>
+    <div class="section-title">异常单处理（值班主管批准/驳回）</div>
+    <div class="card"><table>
+      <thead><tr><th>#</th><th>类型</th><th>说明</th><th>提出人</th><th>状态</th><th>审批</th></tr></thead>
+      <tbody id="exc-body"></tbody>
+    </table></div>
+  </section>
+</main>
+
+<!-- 通用操作弹窗 -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" id="modal"></div>
+</div>
+<div id="toast"></div>
+<div class="modal-bg lightbox" id="lightbox-bg"><img id="lightbox-img" alt="外观照片"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>
